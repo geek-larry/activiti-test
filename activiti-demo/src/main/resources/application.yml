@@ -1,0 +1,39 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/activiti_demo
+    driver-class-name: org.postgresql.Driver
+    username: activiti
+    password: activiti
+
+  # Activiti7 配置(配置前缀 spring.activiti)
+  activiti:
+    # 自动创建/更新 Activiti 表(ACT_*)
+    database-schema-update: true
+    # 历史记录级别:none/audit/activity/full
+    history-level: audit
+    db-history-used: true
+    # 启动时检查并自动部署 classpath:processes/*.bpmn20.xml
+    check-process-definitions: true
+    # 关闭异步任务执行器(demo 简化)
+    async-executor-activate: false
+
+  jpa:
+    hibernate:
+      # 只管理业务表,不碰 ACT_* 表
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # Activiti7 内部使用 jpa,关闭其 open-in-view 警告
+  jpa-open-in-view: false
+
+logging:
+  level:
+    org.activiti: INFO
+    org.springframework.security: INFO

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+             xmlns:activiti="http://activiti.org/bpmn"
+             targetNamespace="http://example.com/activiti">
+
+    <process id="approval" name="请假审批流程" isExecutable="true">
+
+        <!-- 开始 -->
+        <startEvent id="startEvent" name="开始"/>
+
+        <!-- 申请提交节点 -->
+        <userTask id="submitTask" name="申请提交" activiti:assignee="${applicant}"/>
+
+        <!-- 初审节点(或签:多人并行,任一人完成即流转) -->
+        <userTask id="firstReview" name="初审" activiti:assignee="${firstApprover}">
+            <multiInstanceLoopCharacteristics isSequential="false"
+                                              activiti:collection="${firstReviewers}"
+                                              activiti:elementVariable="firstApprover">
+                <completionCondition xsi:type="tFormalExpression">${nrOfCompletedInstances >= 1}</completionCondition>
+            </multiInstanceLoopCharacteristics>
+        </userTask>
+
+        <!-- 初审结果判断 -->
+        <exclusiveGateway id="firstReviewGateway" name="初审结果判断"/>
+
+        <!-- 复审节点(或签) -->
+        <userTask id="secondReview" name="复审" activiti:assignee="${secondApprover}">
+            <multiInstanceLoopCharacteristics isSequential="false"
+                                              activiti:collection="${secondReviewers}"
+                                              activiti:elementVariable="secondApprover">
+                <completionCondition xsi:type="tFormalExpression">${nrOfCompletedInstances >= 1}</completionCondition>
+            </multiInstanceLoopCharacteristics>
+        </userTask>
+
+        <!-- 复审结果判断 -->
+        <exclusiveGateway id="secondReviewGateway" name="复审结果判断"/>
+
+        <!-- 结束:通过 -->
+        <endEvent id="approvedEnd" name="审批通过"/>
+        <!-- 结束:驳回 -->
+        <endEvent id="rejectedEnd" name="审批驳回"/>
+
+        <!-- 流向 -->
+        <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="submitTask"/>
+        <sequenceFlow id="flow2" sourceRef="submitTask" targetRef="firstReview"/>
+        <sequenceFlow id="flow3" sourceRef="firstReview" targetRef="firstReviewGateway"/>
+        <!-- 初审通过 → 复审 -->
+        <sequenceFlow id="flow4" sourceRef="firstReviewGateway" targetRef="secondReview">
+            <conditionExpression xsi:type="tFormalExpression">${firstApproved == true}</conditionExpression>
+        </sequenceFlow>
+        <!-- 初审驳回 → 驳回结束 -->
+        <sequenceFlow id="flow5" sourceRef="firstReviewGateway" targetRef="rejectedEnd">
+            <conditionExpression xsi:type="tFormalExpression">${firstApproved == false}</conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="flow6" sourceRef="secondReview" targetRef="secondReviewGateway"/>
+        <!-- 复审通过 → 通过结束 -->
+        <sequenceFlow id="flow7" sourceRef="secondReviewGateway" targetRef="approvedEnd">
+            <conditionExpression xsi:type="tFormalExpression">${secondApproved == true}</conditionExpression>
+        </sequenceFlow>
+        <!-- 复审驳回 → 驳回结束 -->
+        <sequenceFlow id="flow8" sourceRef="secondReviewGateway" targetRef="rejectedEnd">
+            <conditionExpression xsi:type="tFormalExpression">${secondApproved == false}</conditionExpression>
+        </sequenceFlow>
+
+    </process>
+
+</definitions>

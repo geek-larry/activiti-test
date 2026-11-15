@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: activiti-demo-postgres
+    environment:
+      POSTGRES_DB: activiti_demo
+      POSTGRES_USER: activiti
+      POSTGRES_PASSWORD: activiti
+    ports:
+      - "5432:5432"
+    # PG18 镜像要求挂载到 /var/lib/postgresql(而非 .../data)
+    volumes:
+      - activiti_pg_data:/var/lib/postgresql
+    restart: unless-stopped
+
+volumes:
+  activiti_pg_data:
